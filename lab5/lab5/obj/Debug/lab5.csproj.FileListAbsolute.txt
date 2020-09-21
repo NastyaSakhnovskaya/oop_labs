@@ -1,0 +1,7 @@
+D:\Visual_Studio\2 course\1-sem\lab5\lab5\bin\Debug\lab5.exe.config
+D:\Visual_Studio\2 course\1-sem\lab5\lab5\bin\Debug\lab5.exe
+D:\Visual_Studio\2 course\1-sem\lab5\lab5\bin\Debug\lab5.pdb
+D:\Visual_Studio\2 course\1-sem\lab5\lab5\obj\Debug\lab5.csprojAssemblyReference.cache
+D:\Visual_Studio\2 course\1-sem\lab5\lab5\obj\Debug\lab5.csproj.CoreCompileInputs.cache
+D:\Visual_Studio\2 course\1-sem\lab5\lab5\obj\Debug\lab5.exe
+D:\Visual_Studio\2 course\1-sem\lab5\lab5\obj\Debug\lab5.pdb
