@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
+using System.Diagnostics;
 //Developer -> *
 //Software -> OperationsSet(interface)
 //Software -> Program -> TextProcessor -> Word
@@ -25,10 +26,40 @@ namespace lab6
         }
         static public void Print()
         {
-            foreach(Program p in Programs)
+            foreach (Program p in Programs)
             {
                 p.Info();
                 Console.WriteLine();
+            }
+        }
+        static public void DeleteByIndex(int index)
+        {
+            if(index > Programs.Count || index < 0)
+            {
+                throw new MyCustomOutOfRangeException(
+                    "Попытка удалить несуществующий элемент (кастомное исключение 1)", 
+                    "Обращение к null (кастомное исключение 1)"
+                );
+
+            }
+            else
+            {
+                Programs.RemoveAt(index);
+            }
+        }
+        static public void UpdateGame(Program program)
+        {
+            Game game = program as Game;
+            if(game == null)
+            {
+                throw new MyGameUpdateException(
+                    "Попытка обновить не игру (кастомное исключение 2)",
+                    "Невозможно преобразовать входящий тип (кастомное исключение 2)"
+                    );
+            }
+            else
+            {
+                Console.WriteLine("Game was updated!");
             }
         }
     }
@@ -44,7 +75,7 @@ namespace lab6
         {
             Console.WriteLine("Choose game genre:");
             FieldInfo[] genres = typeof(Genres).GetFields();
-            for( int i = 1; i < genres.Length; i++)
+            for (int i = 1; i < genres.Length; i++)
             {
                 Console.Write(genres[i].Name + " --- " + i);
                 Console.WriteLine();
@@ -52,11 +83,12 @@ namespace lab6
             int genreIndex = Convert.ToInt32(Console.ReadLine());
 
             List<Program> Games = new List<Program>();
-            foreach(Program p in Computer.Programs)
+            foreach (Program p in Computer.Programs)
             {
                 if (genreIndex > 0 && genreIndex < genres.Length)
                 {
-                    if (p.GetType() == typeof(Game)){
+                    if (p.GetType() == typeof(Game))
+                    {
                         Game game = p as Game;
                         if (game.Genre == genres[genreIndex].Name)
                         {
@@ -79,8 +111,8 @@ namespace lab6
             string version = Console.ReadLine();
 
             List<Program> TextProcessors = new List<Program>();
-            
-foreach (Program p in Computer.Programs)
+
+            foreach (Program p in Computer.Programs)
             {
                 if (p.GetType() == typeof(TextProcessor))
                 {
@@ -165,16 +197,16 @@ foreach (Program p in Computer.Programs)
         {
             Console.WriteLine($"Состояние программы: {State}");
         }
-        public struct Properties
-        {
-            public string version;
-            public string lastModifiedBy;
+        //public struct Properties
+        //{
+        //    public string version;
+        //    public string lastModifiedBy;
 
-            public void Log()
-            {
-                Console.WriteLine($"Version of program: {version}\nLast Edit By: {lastModifiedBy}");
-            }
-        }
+        //    public void Log()
+        //    {
+        //        Console.WriteLine($"Version of program: {version}\nLast Edit By: {lastModifiedBy}");
+        //    }
+        //}
 
         public override void Info()
         {
@@ -232,6 +264,8 @@ foreach (Program p in Computer.Programs)
     class Word : TextProcessor
     {
         public string SpecificColor { get; set; }
+        public int NumberOfOpens { get; set; }
+        public int NumberOfErroredOpens { get; set; }
         public Word() : base()
         {
             Name = "Word";//override default field's value
@@ -242,15 +276,32 @@ foreach (Program p in Computer.Programs)
             DeveloperName = developerName;
             Version = version;
         }
+        public Word(int numOfOpens, int numOfErroredOpens)
+        {
+            Debug.Assert(numOfOpens > -1 && numOfErroredOpens > -1, "Uncorrect values");
+            
+            NumberOfOpens = numOfOpens;
+            NumberOfErroredOpens = numOfErroredOpens;
+        }
         public override void Info()
         {
             base.Info();
             Console.WriteLine($"Specific Color: {SpecificColor} ");
         }
+        public void GetInfoAboutOpens()
+        {
+            Console.WriteLine($"Запусков с ошибкой: {NumberOfErroredOpens}\nВсего запусков: {NumberOfOpens}");
+        }
         public override string ToString()
         {
             Console.WriteLine(base.ToString());
             return $"Specific color: {SpecificColor}";
+        }
+        public float PercentOfErroredOpens()
+        {
+            float result = (NumberOfErroredOpens / NumberOfOpens);
+            result = ((float)NumberOfErroredOpens / (float)NumberOfOpens);
+            return result;
         }
     }
     class Game : Program
@@ -293,20 +344,6 @@ foreach (Program p in Computer.Programs)
             base.Info();
             Console.WriteLine($"Is online: {IsOnline}");
         }
-        public void Start()
-        {
-            Console.WriteLine("Sapper is ready to play...");
-        }
-
-        public void GetStatistics()
-        {
-            Console.WriteLine("Wins: 28\nAchievements: 25");
-        }
-
-        public void Close()
-        {
-            Console.WriteLine("Are you sure to exit Sapper?");
-        }
     }
     class Virus : Program
     {
@@ -323,127 +360,125 @@ foreach (Program p in Computer.Programs)
         {
             base.Info();
             Console.WriteLine($"Target: {Target}");
-        }        
+        }
         public override string ToString()
         {
             Console.WriteLine(base.ToString());
             return $"target: {Target}";
         }
     }
+    class MyCustomOutOfRangeException : NullReferenceException
+    {
+        public string Cause { get; set; }
+        public string ExcName { get; set; }
+        public string Date { get; set; }
+        public MyCustomOutOfRangeException(string name, string message)
+        {
+            Cause = message;
+            ExcName = name;
+            Date = DateTime.Now.ToLongTimeString();
+        }
+        public string MyExcCause()
+        {
+            return Cause;
+        }
+        public string MyExcName()
+        {
+            return ExcName;
+        }
+        public string MyExcDate()
+        {
+            return Date + " (кастомное исключение 1)";
+        }
+    }
+    class MyGameUpdateException : InvalidCastException
+    {
+        public string Cause { get; set; }
+        public string ExcName { get; set; }
+        public string Date { get; set; }
+        public MyGameUpdateException(string name, string message)
+        {
+            Cause = message;
+            ExcName = name;
+            Date = DateTime.Now.ToLongTimeString() + " (кастомное исключение 2)";
+        }
+        public void Info()
+        {
+            Console.WriteLine($"Error Name: {ExcName}\nReason: {Cause}\nTime: {Date}");
+        }
+    }
     class Laba
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("///////// Partial Class in Different files test");
-            Virus virus2 = new Virus("Chameleon", "Yura", "Data Base");
-            virus2.Info();
-            Console.WriteLine();
-            Virus virus1 = new Virus("qwe", "Yura", "OS");
-            virus1.Info();
-            Console.Write("Are objects equal?  ");
-            if (virus1.Equals(virus2)) {
-                Console.WriteLine("Yes");
-            }
-            else {
-                Console.WriteLine("No!");
-            }
-
-            Console.WriteLine();
-            Console.WriteLine("///////// Enum test");
-            Game Dota2 = new Game("Dota 2", "Valve", "MMORPG");
-            Dota2.Info();
-            Dota2.GetState();
-            Console.WriteLine("Включаем программу...");
-            Dota2.State = Program.ProgramState.Loading;
-            Dota2.GetState();
-            Dota2.State = Program.ProgramState.Ready;
-            Dota2.GetState();
+            Game myGameException = new Game();
+            Game myGameException2 = new Game("Dota 2", "Valve", "MMORPG");
+            Game myGameException3 = new Game("CK3", "Paradox", "Strategy");
+            Virus myVirusException = new Virus();
+            Computer.Programs.Add(myGameException);
 
 
-            Console.WriteLine();
-            Console.WriteLine("///////// Struct test");
-
-            Virus structVirus = new Virus();
-            Virus.Properties props = new Virus.Properties
+            Console.WriteLine("\n   ####### Имитируем обработку кастомного исключения 1\n");
+            try
             {
-                version = "1.0.2",
-                lastModifiedBy = "Kubarko"
-            };
-            props.Log();
-
-
-            Console.WriteLine();
-            Console.WriteLine("///////// Class-Container test");
-
-            Word wordProgram = new Word();
-            Sapper sapperProgram = new Sapper();
-            Game gameProgram = new Game("Dota 2", "Valve", "MMORPG");
-            Computer.Add(wordProgram);
-            Computer.Add(sapperProgram);
-            Computer.Add(gameProgram);
-            Computer.Add(new Game("Crusader Kings 3", "Paradox", "Strategy"));
-            Console.WriteLine("\n*** Printing all objects before deleting ***");
-            Computer.Print();
-            Computer.Delete(gameProgram);
-            Console.WriteLine("\n*** Printing all objects after deleting ***");
-            Computer.Print();
-
-
-
-            Console.WriteLine("///////// Class-Controller test");
-            Console.WriteLine();
-            Game gameController1 = new Game("Dota 2", "Valve", "MMORPG");
-            Game gameController2 = new Game("Dota 3", "Ubisoft", "MMORPG");
-            Game gameController3 = new Game("Dota 15", "Paradox", "MMORPG");
-            Game gameController4 = new Game("Counter-Strike", "Valve", "Shooter");
-            Computer.Add(gameController1);
-            Computer.Add(gameController2);
-            Computer.Add(gameController3);
-            Computer.Add(gameController4);
-            
-
-            List<Program> GamesSortedByGenre = Controller.FindGamesByType();
-            foreach(Game p in GamesSortedByGenre)
+                Computer.DeleteByIndex(-1);//Вызовется кастомное исключение 1
+            }
+            catch (MyCustomOutOfRangeException ex)
             {
-                p.Info();
-                Console.WriteLine();
+                Console.WriteLine($"Error Name: {ex.MyExcName()}");
+                Console.WriteLine($"Reason: {ex.MyExcCause()}");
+                Console.WriteLine($"Time: {ex.MyExcDate()}");
             }
 
-            Console.WriteLine("///////// Class-Controller test 2");
-            Console.WriteLine();
-            TextProcessor tController1 = new TextProcessor("Texter", "Ivan", "1.0.0");
-            TextProcessor tController2 = new TextProcessor("Edit Me", "Helen Frolova", "1.2.0");
-            TextProcessor tController3 = new TextProcessor();
-            Word tController4 = new Word("John Worder", "1.0.1");
-            Word tController5 = new Word();
-            Computer.Add(tController1);
-            Computer.Add(tController2);
-            Computer.Add(tController3);
-            Computer.Add(tController4);
-            Computer.Add(tController5);
-
-            List<Program> TextProcessorsFilteredByVersion = Controller.TextProcessorVersion();
-            foreach (TextProcessor t in TextProcessorsFilteredByVersion)
+            Console.WriteLine("\n   ####### Имитируем обработку кастомного исключения 2\n");
+            try
             {
-                t.Info();
-                Console.WriteLine();
+                Computer.UpdateGame(myVirusException);//Вызовется кастомное исключение 2
+                //Computer.UpdateGame(myGameException);//Не вызовется кастомное исключение 2
             }
+            catch (MyGameUpdateException ex)
+            {
+                ex.Info();
+            }
+
+            Console.WriteLine("\n   ####### Имитируем обработку исключения 1\n");
+            try
+            {
+                Computer.Programs.Insert(-1, new Word());
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}\nErrored parameter: {ex.ParamName}\nTarget Site: {ex.TargetSite}");
+            }
+
+
+
+            Console.WriteLine("\n   ####### Имитируем обработку исключения 2\n");
+            try
+            {
+                Console.WriteLine("Сколько раз Word запускался с ошибкой?");
+                int numOfErrors = Convert.ToInt32(Console.ReadLine());
+                Console.WriteLine("Сколько всего раз вы запускали Word?");
+                int numOfOpens = Convert.ToInt32(Console.ReadLine());
+                Word myWordDivideByZeroException = new Word(numOfOpens, numOfErrors);
+                myWordDivideByZeroException.GetInfoAboutOpens();
+
+                Console.WriteLine(myWordDivideByZeroException.PercentOfErroredOpens());//Вызовется если numOfOpens == 0
+            }
+            catch (DivideByZeroException ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}\nTarget Site: {ex.TargetSite}");
+            }
+            catch(FormatException ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}\nTarget Site: {ex.TargetSite}");
+            }
+            finally
+            {
+                Console.WriteLine("Блок Finally...");
+            }
+
             Console.ReadKey();
-            Console.WriteLine("//////////// Sorting Test");
-            Console.WriteLine("Before Sorting: ");
-            foreach (Program p in Computer.Programs)
-            {
-                p.Info();
-                Console.WriteLine();
-            }
-            Console.WriteLine();
-            Console.WriteLine("After Sorting: ");
-            List<Program> SortedPrograms = Controller.SortByName();
-            foreach (Program p in SortedPrograms)
-            {
-                p.Info();
-                Console.WriteLine();
-            }
         }
     }
 }
